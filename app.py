@@ -25,7 +25,7 @@ youtube_dl.utils.bug_reports_message = lambda: ''
 
 
 ytdl_format_options = {
-    'format': 'bestaudio/best',
+    'format': 'bestaudio/mp3',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
     'noplaylist': True,
@@ -48,9 +48,7 @@ ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 class YTDLSource(discord.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=0.5):
         super().__init__(source, volume)
-
         self.data = data
-
         self.title = data.get('title')
         self.url = data.get('url')
 
@@ -80,8 +78,22 @@ class Music(commands.Cog):
 
         await channel.connect()
 
+    @commands.command(
+        type=1,
+        name="play",
+        description="Akari plays a song - autosearch or URL"
+    )
+    async def play(self, ctx, *, url):
+        """Streams from a url (same as yt, but doesn't predownload)"""
+
+        async with ctx.typing():
+            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
+            ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
+
+        await ctx.send(f'Now playing: {player.title}')
+
     @commands.command()
-    async def play(self, ctx, *, query):
+    async def local(self, ctx, *, query):
         """Plays a file from the local filesystem"""
 
         source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(query))
@@ -100,16 +112,6 @@ class Music(commands.Cog):
         await ctx.send(f'Now playing: {player.title}')
 
     @commands.command()
-    async def stream(self, ctx, *, url):
-        """Streams from a url (same as yt, but doesn't predownload)"""
-
-        async with ctx.typing():
-            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
-            ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
-
-        await ctx.send(f'Now playing: {player.title}')
-
-    @commands.command()
     async def volume(self, ctx, volume: int):
         """Changes the player's volume"""
 
@@ -119,7 +121,11 @@ class Music(commands.Cog):
         ctx.voice_client.source.volume = volume / 100
         await ctx.send(f"Changed volume to {volume}%")
 
-    @commands.command()
+    @commands.command(
+        type=1,
+        name="stop",
+        description="Stops and disconnects Akari from voice chat"
+    )
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
 
@@ -143,7 +149,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(
-    command_prefix=commands.when_mentioned_or("!"),
+    command_prefix=commands.when_mentioned_or("/"),
     description='Relatively simple music bot example',
     intents=intents,
 )
