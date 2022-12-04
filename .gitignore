@@ -19,4 +19,4 @@ venv/
 
 #App logs
 discord.log
-slashCommands.py
+#slashCommands.py
