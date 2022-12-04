@@ -175,5 +175,9 @@ async def on_message(message) :
         await message.channel.purge(limit=1)
 
 
-if __name__ == "__main__" :
-    bot.start(DISCORD_TOKEN)
+#if __name__ == "__main__" :
+async def main():
+    async with bot:
+        await bot.start(DISCORD_TOKEN)
+
+asyncio.run(main())
