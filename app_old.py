@@ -14,7 +14,7 @@ DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 
 intents = discord.Intents().all()
 client = discord.Client(intents=intents)
-bot = commands.Bot(command_prefix='/',intents=intents)
+bot = commands.Bot(command_prefix='!',intents=intents)
 
 
 youtube_dl.utils.bug_reports_message = lambda: ''
