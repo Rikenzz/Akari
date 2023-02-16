@@ -22,7 +22,7 @@ async def play_song(ctx, url):
             play_song(ctx, next_song)
 
     # Get the voice client for the bot's current server
-    voice_client = ctx.guild.voice_client
+    voice_client = ctx.voice_client
 
     # Create a youtube-dl player and start playing the song
     ytdl_opts = {
@@ -69,7 +69,7 @@ class Music(commands.Cog):
         description="Play a song"
     )
     @app_commands.describe(song="Youtube URL or song name (autosearch)")
-    async def play(self, ctx, song: str):
+    async def play(self, ctx, *, song: str):
         # Check if user is in a voice channel
         if not ctx.author.voice:
             await ctx.send('You are not connected to a voice channel.')
