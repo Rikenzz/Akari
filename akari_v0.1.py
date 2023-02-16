@@ -1,11 +1,12 @@
 import asyncio
 import discord
-from discord.ext import commands
-from discord import app_commands
+from discord.ext import commands, tasks
 import youtube_dl
 import os
 from dotenv import load_dotenv
 
+# slash commands test
+import interactions
 
 load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
@@ -70,12 +71,6 @@ class Music(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def sync(self, ctx) -> None:
-        cmdno = await ctx.bot.tree.sync()
-        await ctx.send(f"Synced {len(cmdno)} commands")
-        return
-
-    @commands.command()
     async def join(self, ctx, *, channel: discord.VoiceChannel):
         """Joins a voice channel"""
 
@@ -84,25 +79,61 @@ class Music(commands.Cog):
 
         await channel.connect()
 
-    @app_commands.command(
+    @commands.command(
+        type=1,
         name="play",
         description="Akari plays a song - autosearch or URL"
     )
-    @app_commands.describe(url="Youtube URL or song name (autosearch)")
     async def play(self, ctx, *, url):
+        """Streams from a url (same as yt, but doesn't predownload)"""
+
         async with ctx.typing():
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
             ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
 
         await ctx.send(f'Now playing: {player.title}')
 
-    @app_commands.command(
+    @commands.command()
+    async def local(self, ctx, *, query):
+        """Plays a file from the local filesystem"""
+
+        source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(query))
+        ctx.voice_client.play(source, after=lambda e: print(f'Player error: {e}') if e else None)
+
+        await ctx.send(f'Now playing: {query}')
+
+    @commands.command()
+    async def yt(self, ctx, *, url):
+        """Plays from a url (almost anything youtube_dl supports)"""
+
+        async with ctx.typing():
+            player = await YTDLSource.from_url(url, loop=self.bot.loop)
+            ctx.voice_client.play(player, after=lambda e: print(f'Player error: {e}') if e else None)
+
+        await ctx.send(f'Now playing: {player.title}')
+
+    @commands.command()
+    async def volume(self, ctx, volume: int):
+        """Changes the player's volume"""
+
+        if ctx.voice_client is None:
+            return await ctx.send("Not connected to a voice channel.")
+
+        ctx.voice_client.source.volume = volume / 100
+        await ctx.send(f"Changed volume to {volume}%")
+
+    @commands.command(
+        type=1,
         name="stop",
         description="Stops and disconnects Akari from voice chat"
     )
     async def stop(self, ctx):
+        """Stops and disconnects the bot from voice"""
+
         await ctx.voice_client.disconnect()
 
+    @local.before_invoke
+    @yt.before_invoke
     @play.before_invoke
     async def ensure_voice(self, ctx):
         if ctx.voice_client is None:
