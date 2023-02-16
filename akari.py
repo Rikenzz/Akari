@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-import interactions
+from discord import app_commands
 import youtube_dl
 import os
 from dotenv import load_dotenv
@@ -12,11 +12,10 @@ from dotenv import load_dotenv
 load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 
+# Intents
 intents = discord.Intents.default()
 intents.message_content = True
-bot = interactions.Client(token=DISCORD_TOKEN, intents=intents)
-
-
+bot = discord.Client(intents=intents)
 
 # YoutubeDL config
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -68,21 +67,13 @@ async def play_song(ctx, url):
 
 ### BOT COMMANDS
 # Play command
-@bot.command(
+@app_commands.command(
     name="play",
     description="Play a song in a voice channel",
-    options = [
-        interactions.Option(
-            name="song",
-            description="Song URL or name (autosearch)",
-            type=interactions.OptionType.STRING,
-            required=True,
-        ),
-    ],
 )
-async def play(ctx: interactions.CommandContext, song: str):
+async def play(ctx, song: str):
     # Check if user is in a voice channel
-    if not ctx.author.voice:
+    if not ctx.author:
         await ctx.send('You are not connected to a voice channel.')
         return
     
@@ -102,11 +93,11 @@ async def play(ctx: interactions.CommandContext, song: str):
         await play_song(ctx, song)
 
 # Skip command
-@bot.command(
+@app_commands.command(
     name="skip",
     description="Skip the current song",
 )
-async def skip(ctx: interactions.CommandContext):
+async def skip(ctx):
     # Get voice client for current server
     voice_client = ctx.guild.voice_client
 
@@ -120,11 +111,11 @@ async def skip(ctx: interactions.CommandContext):
 
 
 # Stop command
-@bot.command(
+@app_commands.command(
     name="stop",
     description="Stop playing music and disconnect the bot",
 )
-async def stop(ctx: interactions.CommandContext):
+async def stop(ctx):
     # Get the voice client for the bot's current server
     voice_client = ctx.guild.voice_client
 
@@ -139,4 +130,9 @@ async def stop(ctx: interactions.CommandContext):
 
 
 ### BOT START
-bot.start()
+@bot.event
+async def on_start():
+    print(f'Logged in as {bot.user} (ID: {bot.user.id})')
+    print('------')
+
+bot.run(DISCORD_TOKEN)
