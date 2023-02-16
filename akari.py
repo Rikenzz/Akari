@@ -4,6 +4,24 @@ from discord import app_commands
 import youtube_dl
 import os
 from dotenv import load_dotenv
+import logging
+import logging.handlers
+
+### LOGGING SETUP
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+logging.getLogger('discord.http').setLevel(logging.INFO)
+
+handler = logging.handlers.RotatingFileHandler(
+    filename='discord.log',
+    encoding='utf-8',
+    maxBytes=32 * 1024 * 1024,  # 32 MiB
+    backupCount=5,  # Rotate through 5 files
+)
+dt_fmt = '%Y-%m-%d %H:%M:%S'
+formatter = logging.Formatter('[{asctime}] [{levelname:<8}] {name}: {message}', dt_fmt, style='{')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 ### BOT CONFIG
@@ -67,9 +85,9 @@ async def play_song(ctx, url):
 
 ### BOT COMMANDS
 # Play command
-@app_commands.command(
+@commands.command(
     name="play",
-    description="Play a song in a voice channel",
+    description="Play a song in a voice channel UPDATE",
 )
 async def play(ctx, song: str):
     # Check if user is in a voice channel
@@ -135,4 +153,4 @@ async def on_start():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
 
-bot.run(DISCORD_TOKEN)
+bot.run(DISCORD_TOKEN, log_handler=None)
