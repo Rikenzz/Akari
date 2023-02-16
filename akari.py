@@ -10,10 +10,13 @@ from dotenv import load_dotenv
 
 # Load DISCORD_TOKEN from .env
 load_dotenv()
-bot = interactions.Client(token=os.getenv('DISCORD_TOKEN'))
+DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 
 intents = discord.Intents.default()
 intents.message_content = True
+bot = interactions.Client(token=DISCORD_TOKEN, intents=intents)
+
+
 
 # YoutubeDL config
 youtube_dl.utils.bug_reports_message = lambda: ''
