@@ -4,13 +4,14 @@
   "description": "Discord music bot in JavaScript (by Riken)",
   "main": "akari.js",
   "dependencies": {
-    "discord.js": "^13.2.0",
+    "@discordjs/opus": "^0.8.0",
     "@discordjs/voice": "^0.14.0",
-    "sodium": "^3.0.2",
+    "discord.js": "^13.2.0",
+    "dotenv": "^16.0.3",
     "ffmpeg-static": "^4.4.0",
+    "sodium": "^3.0.2",
     "ytdl-core": "^4.9.2",
-    "ytsr": "^3.8.0",
-    "dotenv": "^16.0.3"
+    "ytsr": "^3.8.0"
   },
   "repository": {
     "type": "git",
@@ -28,4 +29,3 @@
   },
   "homepage": "https://github.com/Rikenzz/Akari#readme"
 }
-
