@@ -1,5 +1,4 @@
 // Discord music bot by Riken
-global.AbortController = require("abort-controller"); // Prevents logging errors when parsing YT shorts, not implemented yet in ytsr (merge request submitted)
 const { Client, Intents } = require('discord.js');
 const ytdl = require('ytdl-core');
 const ytsr = require('ytsr');
