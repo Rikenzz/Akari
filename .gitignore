@@ -1,13 +1,6 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# pyenv
-.python-version
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow
-__pypackages__/
+# Packages
+package-lock.json
+node_modules/
 
 # Environments
 .env
@@ -21,4 +14,3 @@ venv/
 discord.log
 
 #Others
-

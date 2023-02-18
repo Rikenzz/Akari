@@ -1,0 +1,31 @@
+{
+  "name": "akari",
+  "version": "1.0.0",
+  "description": "Discord music bot in JavaScript (by Riken)",
+  "main": "akari.js",
+  "dependencies": {
+    "discord.js": "^13.2.0",
+    "@discordjs/voice": "^0.14.0",
+    "sodium": "^3.0.2",
+    "ffmpeg-static": "^4.4.0",
+    "ytdl-core": "^4.9.2",
+    "ytsr": "^3.8.0",
+    "dotenv": "^16.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rikenzz/Akari.git"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "music"
+  ],
+  "author": "Riken",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Rikenzz/Akari/issues"
+  },
+  "homepage": "https://github.com/Rikenzz/Akari#readme"
+}
+
