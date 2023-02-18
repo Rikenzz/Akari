@@ -1,5 +1,4 @@
 // Discord music bot by Riken
-global.AbortController = require("abort-controller"); // Prevents logging errors when parsing YT shorts, not implemented yet in ytsr (merge request submitted)
 const { Client, Intents } = require('discord.js');
 const ytdl = require('ytdl-core');
 const ytsr = require('ytsr');
@@ -113,9 +112,9 @@ client.on('interactionCreate', async interaction => {
         serverQueue.songs = [];
         serverQueue.playing = false;
         if (serverQueue.connection) {
+            serverQueue.playing = false;
             serverQueue.connection.destroy();
-            serverQueue.connection = null;
-            queue.clear();
+            queue.delete(serverQueue.voiceChannel.guild.id);
         }
         return interaction.reply('Stopped playing music and cleared the queue!');
     }
