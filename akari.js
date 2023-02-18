@@ -112,9 +112,9 @@ client.on('interactionCreate', async interaction => {
         serverQueue.songs = [];
         serverQueue.playing = false;
         if (serverQueue.connection) {
+            serverQueue.playing = false;
             serverQueue.connection.destroy();
-            serverQueue.connection = null;
-            queue.clear();
+            queue.delete(serverQueue.voiceChannel.guild.id);
         }
         return interaction.reply('Stopped playing music and cleared the queue!');
     }
