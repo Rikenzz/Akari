@@ -9,14 +9,14 @@ To see if it installed correctly, run the following commands:
 node -v
 npm -v
 ```
-Akari is currently running on Node v19.0.0 and NPM v8.19.2.
+Akari is currently running fine on Node v19.0.0 and NPM v9.6.7
 
-Then you can clone this repository and move into the newly created folder to run ```npm install```
+You can then clone this repository and move into the newly created folder to run ```npm install```
 
 You may also want to create a virtual environment before running the install command so packages are not installed globally on your system.
 
 ## CONFIG
-Create a .env file containing your Discord bot token:
+Copy ```.env-sample``` to a ```.env``` file and fill in the DISCORD_TOKEN variable (only this one is required to run):
 ```
 DISCORD_TOKEN = "put-your-discord-bot-token-here"
 ```
@@ -37,8 +37,8 @@ After=syslog.target network-online.target
 [Service]
 Type=simple
 User=root
-ExecStart= /root/.nvm/versions/node/v19.0.0/bin/node /root/dev/Akari/akari.js
-WorkingDirectory=/root/dev/Akari
+ExecStart= /root/.nvm/versions/node/v19.0.0/bin/node /app/akari/akari.js
+WorkingDirectory=/app/akari
 Restart=on-failure
 RestartSec=10
 KillMode=process
