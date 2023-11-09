@@ -126,21 +126,28 @@ async function playSong(songData, serverQueue) {
     const stream = ytdl(songData.url, { 
         filter: 'audioonly',
         fmt: 'mp3',
-        highWaterMark: 1 << 62,
-        liveBuffer: 1 << 62,
-        dlChunkSize: 0,
-        bitrate: 64,
+        highWaterMark: 1 << 25, // Adjust this value based on your requirements
     });
     const resource = createAudioResource(stream, { inlineVolume: true });
+
+    if (!serverQueue.player) {
+        const player = createAudioPlayer();
+        serverQueue.player = player;
+        serverQueue.connection.subscribe(player);
+    }
+
     serverQueue.player.play(resource);
-    serverQueue.player.on(AudioPlayerStatus.Idle, () => {
-        serverQueue.songs.shift();
+
+    serverQueue.player.on(AudioPlayerStatus.Idle, async () => {
         if (serverQueue.songs.length > 0) {
-            playSong(serverQueue.songs[0], serverQueue);
-        } else {
-            serverQueue.playing = false;
-            serverQueue.connection.destroy();
-            queue.delete(serverQueue.voiceChannel.guild.id);
+            serverQueue.songs.shift();
+            if (serverQueue.songs.length > 0) {
+                await playSong(serverQueue.songs[0], serverQueue);
+            } else {
+                serverQueue.playing = false;
+                if (serverQueue.connection) serverQueue.connection.destroy();
+                queue.delete(serverQueue.voiceChannel.guild.id);
+            }
         }
     });
 }
