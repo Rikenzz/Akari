@@ -126,7 +126,10 @@ async function playSong(songData, serverQueue) {
     const stream = ytdl(songData.url, { 
         filter: 'audioonly',
         fmt: 'mp3',
-        highWaterMark: 1 << 25, // Adjust this value based on your requirements
+        highWaterMark: 1 << 62,
+        liveBuffer: 1 << 62,
+        dlChunkSize: 0,
+        bitrate: 64,
     });
     const resource = createAudioResource(stream, { inlineVolume: true });
 
