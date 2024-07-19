@@ -29,7 +29,7 @@ client.on('interactionCreate', async interaction => {
         }
         // Check if bot has permissions to connect and speak in a voice channel
         const permissions = voiceChannel.permissionsFor(interaction.client.user);
-        if (!permissions.has('CONNECT') || !permissions.has('SPEAK')) {
+        if (!permissions.has('CONNECT') || !permissions.has('SPEAK') || !permissions.has('VIEW_CHANNEL')) {
             return interaction.reply({ content: 'I need the permissions to join and speak in your voice channel!', ephemeral: true });
         }
 
@@ -118,6 +118,10 @@ client.on('interactionCreate', async interaction => {
         }
         return interaction.reply('Stopped playing music and cleared the queue!');
     }
+
+    else {
+        return interaction.reply('Unknown command. Available commands: play, skip, stop');
+    }
 });
 
 
@@ -141,18 +145,28 @@ async function playSong(songData, serverQueue) {
 
     serverQueue.player.play(resource);
 
-    serverQueue.player.on(AudioPlayerStatus.Idle, async () => {
-        if (serverQueue.songs.length > 0) {
-            serverQueue.songs.shift();
+    serverQueue.player.on(AudioPlayerStatus.Idle, () => {
+        try {
             if (serverQueue.songs.length > 0) {
-                await playSong(serverQueue.songs[0], serverQueue);
-            } else {
-                serverQueue.playing = false;
-                if (serverQueue.connection) serverQueue.connection.destroy();
-                queue.delete(serverQueue.voiceChannel.guild.id);
+                // Remove the first song from the queue
+                serverQueue.songs.shift();
+
+                // Check if there are more songs to play
+                if (serverQueue.songs.length > 0) {
+                    playSong(serverQueue.songs[0], serverQueue);
+                } else {
+                    // No more songs, clean up
+                    serverQueue.playing = false;
+                    if (serverQueue.connection) serverQueue.connection.destroy();
+                    queue.delete(serverQueue.voiceChannel.guild.id);
+                }
             }
+        } catch (error) {
+            console.error('Error in playSong:', error);
         }
     });
 }
+
+
 
 client.login(token);
