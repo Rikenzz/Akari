@@ -1,13 +1,21 @@
 // Discord music bot by Riken
-const { Client, Intents } = require('discord.js');
+const { Client, GatewayIntentBits, IntentsBitField } = require('discord.js');
 const ytdl = require('ytdl-core');
 const ytsr = require('ytsr');
 require('dotenv').config();
 const token = process.env.DISCORD_TOKEN;
 
-const { createAudioResource, createAudioPlayer, joinVoiceChannel, AudioPlayerStatus } = require('@discordjs/voice');
+const { createAudioResource, createAudioPlayer, joinVoiceChannel, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES] });
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
+});
+
 const queue = new Map();
 
 client.once('ready', () => {
@@ -22,27 +30,25 @@ client.on('interactionCreate', async interaction => {
     // PLAY COMMAND
     if (commandName === 'play') {
         const song = options.getString('song');
-        // Check if user is in a voice channel
         const voiceChannel = interaction.member.voice.channel;
         if (!voiceChannel) {
             return interaction.reply({ content: 'You must be in a voice channel to play music!', ephemeral: true });
         }
-        // Check if bot has permissions to connect and speak in a voice channel
+
         const permissions = voiceChannel.permissionsFor(interaction.client.user);
-        if (!permissions.has('CONNECT') || !permissions.has('SPEAK')) {
+        if (!permissions.has(IntentsBitField.Flags.Connect) || !permissions.has(IntentsBitField.Flags.Speak)) {
             return interaction.reply({ content: 'I need the permissions to join and speak in your voice channel!', ephemeral: true });
         }
 
         const serverQueue = queue.get(interaction.guildId);
 
-        // If URL, get song info. If not, get URL from first search result and proceed
         let songData;
         if (ytdl.validateURL(song)) {
             const songInfo = await ytdl.getInfo(song);
             songData = {
                 title: songInfo.videoDetails.title,
                 url: songInfo.videoDetails.video_url,
-            }
+            };
         } else {
             const searchResults = await ytsr(song, { limit: 1 });
             const videoURL = searchResults.items[0].url;
@@ -51,13 +57,12 @@ client.on('interactionCreate', async interaction => {
                 songData = {
                     title: songInfo.videoDetails.title,
                     url: songInfo.videoDetails.video_url,
-                }
+                };
             }
         }
-        
-        // Create server queue if it does not exist
+
         if (!serverQueue) {
-            const queueContruct = {
+            const queueConstruct = {
                 textChannel: interaction.channel,
                 voiceChannel: voiceChannel,
                 connection: null,
@@ -66,8 +71,8 @@ client.on('interactionCreate', async interaction => {
                 playing: true,
                 player: null
             };
-            queue.set(interaction.guildId, queueContruct);
-            queueContruct.songs.push(songData);
+            queue.set(interaction.guildId, queueConstruct);
+            queueConstruct.songs.push(songData);
 
             try {
                 const connection = joinVoiceChannel({
@@ -75,11 +80,16 @@ client.on('interactionCreate', async interaction => {
                     guildId: voiceChannel.guild.id,
                     adapterCreator: voiceChannel.guild.voiceAdapterCreator,
                 });
-                queueContruct.connection = connection;
+
+                connection.on(VoiceConnectionStatus.Disconnected, async () => {
+                    queue.delete(interaction.guildId);
+                });
+
+                queueConstruct.connection = connection;
                 const player = createAudioPlayer();
-                queueContruct.player = player;
+                queueConstruct.player = player;
                 connection.subscribe(player);
-                playSong(queueContruct.songs[0], queueContruct);
+                playSong(queueConstruct.songs[0], queueConstruct);
                 await interaction.reply(`Now playing: **${songData.title}**`);
             } catch (err) {
                 queue.delete(interaction.guildId);
@@ -112,7 +122,6 @@ client.on('interactionCreate', async interaction => {
         serverQueue.songs = [];
         serverQueue.playing = false;
         if (serverQueue.connection) {
-            serverQueue.playing = false;
             serverQueue.connection.destroy();
             queue.delete(serverQueue.voiceChannel.guild.id);
         }
@@ -120,10 +129,9 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-
 // Play function
 async function playSong(songData, serverQueue) {
-    const stream = ytdl(songData.url, { 
+    const stream = ytdl(songData.url, {
         filter: 'audioonly',
         fmt: 'mp3',
         highWaterMark: 1 << 62,
@@ -151,6 +159,18 @@ async function playSong(songData, serverQueue) {
                 if (serverQueue.connection) serverQueue.connection.destroy();
                 queue.delete(serverQueue.voiceChannel.guild.id);
             }
+        }
+    });
+
+    serverQueue.player.on('error', error => {
+        console.error(`Error: ${error.message}`);
+        serverQueue.songs.shift();
+        if (serverQueue.songs.length > 0) {
+            playSong(serverQueue.songs[0], serverQueue);
+        } else {
+            serverQueue.playing = false;
+            if (serverQueue.connection) serverQueue.connection.destroy();
+            queue.delete(serverQueue.voiceChannel.guild.id);
         }
     });
 }
